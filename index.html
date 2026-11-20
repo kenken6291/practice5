@@ -1,133 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
-    <title>Space Invaders</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#05010f" />
+    <meta name="description" content="ブラウザで遊べるスペースインベーダー。キーボードでもスマホでも遊べます。" />
+    <title>スペースインベーダー | Space Invaders</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%235ef0ff' d='M2 0h1v1H2zM8 0h1v1H8zM3 1h1v1H3zM7 1h1v1H7zM2 2h7v1H2zM1 3h2v1H1zM4 3h3v1H4zM8 3h2v1H8zM0 4h11v1H0zM0 5h1v1H0zM2 5h7v1H2zM10 5h1v1h-1zM0 6h1v1H0zM2 6h1v1H2zM8 6h1v1H8zM10 6h1v1h-1zM3 7h2v1H3zM6 7h2v1H6z'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="css/core.css" />
     <link rel="stylesheet" type="text/css" href="css/typeography.css" />
-    <style>
-      /* Styling needed for a fullscreen canvas and no scrollbars. */
-      body,
-      html {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-
-      #starfield {
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        position: absolute;
-        left: 0px;
-        top: 0px;
-      }
-      #gamecontainer {
-        width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      #gamecanvas {
-        width: 800px;
-        height: 600px;
-      }
-      #info {
-        width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    </style>
   </head>
   <body>
     <div id="starfield"></div>
-    <div id="gamecontainer">
-      <canvas id="gameCanvas"></canvas>
-    </div>
+
+    <main id="app">
+      <div id="screen">
+        <canvas id="gameCanvas" aria-label="スペースインベーダーのゲーム画面"></canvas>
+      </div>
+
+      <div id="toolbar">
+        <button id="btnMute" type="button" class="tool">🔊 サウンド</button>
+        <button id="btnPause" type="button" class="tool">⏸ 一時停止</button>
+        <button id="btnHelp" type="button" class="tool">❓ 遊び方</button>
+      </div>
+
+      <div id="touch" aria-hidden="true">
+        <div class="pad">
+          <button type="button" class="tbtn" data-act="left">◀</button>
+          <button type="button" class="tbtn" data-act="right">▶</button>
+        </div>
+        <button type="button" class="tbtn fire" data-act="fire">発射</button>
+      </div>
+    </main>
+
+    <dialog id="help">
+      <h2>遊び方</h2>
+      <p>空から攻めてくるインベーダーを撃ち落とそう！全部倒すとステージクリア。インベーダーが地上まで来たらゲームオーバーです。</p>
+      <h3>操作</h3>
+      <table>
+        <tr><th>移動</th><td>← → キー（A / D キー）</td></tr>
+        <tr><th>発射</th><td>スペースキー（↑ / W キー）※押しっぱなしで連射</td></tr>
+        <tr><th>一時停止</th><td>P キー / Esc キー</td></tr>
+        <tr><th>音のオン／オフ</th><td>M キー</td></tr>
+        <tr><th>スマホ</th><td>画面下の ◀ ▶ と「発射」ボタン</td></tr>
+      </table>
+      <h3>ポイント</h3>
+      <ul>
+        <li>上の段ほど高得点（10点・20点・30点）。</li>
+        <li>ときどき現れる赤いUFOは 50〜300点！</li>
+        <li>緑の防御壁に隠れて弾をよけよう。ただし撃たれると削れていきます。</li>
+        <li>敵の弾は自分の弾で撃ち消せます（5点）。</li>
+        <li>2000点ごとに残機が1つ増えます。</li>
+        <li>インベーダーは数が減るほど速くなります。</li>
+      </ul>
+      <form method="dialog"><button class="tool close">閉じる</button></form>
+    </dialog>
 
     <script src="js/starfield.js"></script>
     <script src="js/spaceinvaders.js"></script>
     <script>
-      //  Create the starfield.
-      var container = document.getElementById("starfield");
-      var starfield = new Starfield();
-      starfield.initialise(container);
-      starfield.start();
-
-      //  Setup the canvas.
-      var canvas = document.getElementById("gameCanvas");
-      canvas.width = 800;
-      canvas.height = 600;
-
-      //  Create the game.
-      var game = new Game();
-
-      //  Initialise it with the game canvas.
-      game.initialise(canvas);
-
-      //  Start the game.
-      game.start();
-
-      //  Listen for keyboard events.
-      window.addEventListener("keydown", function keydown(e) {
-        var keycode = e.which || window.event.keycode;
-        //  Supress further processing of left/right/space (37/29/32)
-        if (keycode == 37 || keycode == 39 || keycode == 32) {
-          e.preventDefault();
-        }
-        game.keyDown(keycode);
-      });
-      window.addEventListener("keyup", function keydown(e) {
-        var keycode = e.which || window.event.keycode;
-        game.keyUp(keycode);
-      });
-
-      window.addEventListener(
-        "touchstart",
-        function (e) {
-          game.touchstart(e);
-        },
-        false
-      );
-
-      window.addEventListener(
-        "touchend",
-        function (e) {
-          game.touchend(e);
-        },
-        false
-      );
-
-      window.addEventListener(
-        "touchmove",
-        function (e) {
-          game.touchmove(e);
-        },
-        false
-      );
-
-      function toggleMute() {
-        game.mute();
-        document.getElementById("muteLink").innerText = game.sounds.mute
-          ? "unmute"
-          : "mute";
-      }
-    </script>
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(["_setAccount", "UA-41728580-1"]);
-      _gaq.push(["_trackPageview"]);
-
       (function () {
-        var ga = document.createElement("script");
-        ga.type = "text/javascript";
-        ga.async = true;
-        ga.src =
-          ("https:" == document.location.protocol
-            ? "https://ssl"
-            : "http://www") + ".google-analytics.com/ga.js";
-        var s = document.getElementsByTagName("script")[0];
-        s.parentNode.insertBefore(ga, s);
+        //  背景の星空
+        var starfield = new Starfield();
+        starfield.initialise(document.getElementById("starfield"));
+        starfield.start();
+
+        //  ゲーム
+        var canvas = document.getElementById("gameCanvas");
+        var sound = new GameSound();
+        var game = new Game(canvas, sound);
+        window.game = game;
+
+        var isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        if (isTouch) document.body.classList.add("is-touch");
+
+        var btnMute = document.getElementById("btnMute");
+        var btnPause = document.getElementById("btnPause");
+        var btnHelp = document.getElementById("btnHelp");
+        var help = document.getElementById("help");
+
+        function refreshUi() {
+          btnMute.textContent = sound.muted ? "🔇 サウンド" : "🔊 サウンド";
+          btnPause.textContent = game.state === "paused" ? "▶ 再開" : "⏸ 一時停止";
+          btnPause.disabled = !(game.state === "play" || game.state === "paused");
+        }
+        game.onUiChange = refreshUi;
+        refreshUi();
+
+        //  キーボード
+        window.addEventListener("keydown", function (e) {
+          if (help.open) return;
+          if (game.onKey(e.code, true, e.repeat)) e.preventDefault();
+        });
+        window.addEventListener("keyup", function (e) {
+          game.onKey(e.code, false, false);
+        });
+
+        //  ツールバー
+        btnMute.addEventListener("click", function () { game.toggleMute(); btnMute.blur(); });
+        btnPause.addEventListener("click", function () { game.togglePause(); btnPause.blur(); });
+        btnHelp.addEventListener("click", function () {
+          game.togglePause(true);
+          help.showModal();
+        });
+
+        //  画面タップでスタート
+        canvas.addEventListener("pointerdown", function () {
+          sound.unlock();
+          game.tryStart();
+        });
+
+        //  スマホ用ボタン
+        document.querySelectorAll(".tbtn").forEach(function (btn) {
+          var act = btn.dataset.act;
+          function press(e) {
+            e.preventDefault();
+            sound.unlock();
+            if (btn.setPointerCapture && e.pointerId !== undefined) {
+              try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+            }
+            game.touch[act] = true;
+            btn.classList.add("on");
+            if (act === "fire") game.tryStart();
+          }
+          function release() {
+            game.touch[act] = false;
+            btn.classList.remove("on");
+          }
+          btn.addEventListener("pointerdown", press);
+          btn.addEventListener("pointerup", release);
+          btn.addEventListener("pointercancel", release);
+          btn.addEventListener("lostpointercapture", release);
+          btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+        });
+
+        //  タブを離れたら自動で一時停止
+        document.addEventListener("visibilitychange", function () {
+          if (document.hidden) {
+            game.togglePause(true);
+            game.keys.left = game.keys.right = game.keys.fire = false;
+          }
+        });
+        window.addEventListener("blur", function () {
+          game.keys.left = game.keys.right = game.keys.fire = false;
+        });
+        window.addEventListener("resize", function () { game.resize(); });
+
+        //  フォントを読み込んでから開始（読み込めなくても開始）
+        var started = false;
+        function go() { if (!started) { started = true; game.start(); } }
+        if (document.fonts && document.fonts.load) {
+          document.fonts.load('20px "DotGothic16"').then(go, go);
+          setTimeout(go, 1500);
+        } else {
+          go();
+        }
       })();
     </script>
   </body>
